@@ -1,0 +1,21 @@
+{
+  "module": "ERP-OpenClaw",
+  "version": "1.0.0",
+  "capabilities": [
+    "natural_language_assistant",
+    "cross_module_search",
+    "smart_notifications",
+    "workflow_automation",
+    "daily_briefing",
+    "voice_interface",
+    "productivity_tool_integration",
+    "secure_credential_vault",
+    "context_memory",
+    "action_execution",
+    "preference_learning",
+    "command_palette",
+    "embeddable_widget"
+  ],
+  "integration_mode": "standalone_plus_suite",
+  "aidd_governance": "enforced"
+}

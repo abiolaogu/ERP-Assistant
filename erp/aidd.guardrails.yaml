@@ -1,0 +1,9 @@
+version: 1
+module: ERP-OpenClaw
+high_risk_actions:
+  - delete_data
+  - financial_mutation
+  - bulk_messaging
+controls:
+  require_human_approval: true
+  require_audit_log: true
