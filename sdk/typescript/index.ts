@@ -1,1 +1,1 @@
-export type OpenClawCommand = { prompt: string; tenantId: string };
+export type AssistantCommand = { prompt: string; tenantId: string };

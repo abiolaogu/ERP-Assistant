@@ -1,4 +1,4 @@
-# ERP-OpenClaw
+# ERP-Assistant
 
 Personal AI assistant module for the ERP suite.
 

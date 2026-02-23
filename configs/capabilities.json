@@ -1,5 +1,5 @@
 {
-  "module": "ERP-OpenClaw",
+  "module": "ERP-Assistant",
   "version": "1.0.0",
   "capabilities": [
     "natural_language_assistant",

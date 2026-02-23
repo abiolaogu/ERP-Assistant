@@ -23,11 +23,11 @@ type commandRequest struct {
 func loadCapabilities() capabilityDoc {
 	b, err := os.ReadFile("configs/capabilities.json")
 	if err != nil {
-		return capabilityDoc{Module: "ERP-OpenClaw", Capabilities: []string{"unconfigured"}}
+		return capabilityDoc{Module: "ERP-Assistant", Capabilities: []string{"unconfigured"}}
 	}
 	var d capabilityDoc
 	if err := json.Unmarshal(b, &d); err != nil {
-		return capabilityDoc{Module: "ERP-OpenClaw", Capabilities: []string{"invalid_config"}}
+		return capabilityDoc{Module: "ERP-Assistant", Capabilities: []string{"invalid_config"}}
 	}
 	return d
 }
@@ -43,7 +43,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{"status": "healthy", "module": "ERP-OpenClaw"})
+		writeJSON(w, http.StatusOK, map[string]string{"status": "healthy", "module": "ERP-Assistant"})
 	})
 
 	mux.HandleFunc("/v1/capabilities", func(w http.ResponseWriter, r *http.Request) {
@@ -71,14 +71,14 @@ func main() {
 		}
 		writeJSON(w, http.StatusAccepted, map[string]any{
 			"status":  "queued",
-			"message": "command accepted by OpenClaw orchestrator",
+			"message": "command accepted by Assistant orchestrator",
 			"prompt":  req.Prompt,
 			"tenant":  r.Header.Get("X-Tenant-ID"),
 		})
 	})
 
 	addr := ":8090"
-	log.Printf("ERP-OpenClaw listening on %s", addr)
+	log.Printf("ERP-Assistant listening on %s", addr)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)
 	}

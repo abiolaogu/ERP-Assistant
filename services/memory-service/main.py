@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-app = FastAPI(title="OpenClaw Memory Service")
+app = FastAPI(title="ERP-Assistant Memory Service")
 
 @app.get("/healthz")
 def healthz():

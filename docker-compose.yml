@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  openclaw-api:
+  assistant-api:
     build:
       context: .
       dockerfile: Dockerfile
@@ -32,4 +32,12 @@ services:
     environment:
       POSTGRES_USER: erp
       POSTGRES_PASSWORD: erp
-      POSTGRES_DB: erp_openclaw
+      POSTGRES_DB: erp_assistant
+
+  briefing-service:
+    build: ./services/briefing-service
+
+  voice-service:
+    build: ./services/voice-service
+    ports:
+      - "8208:8080"

@@ -1,9 +1,17 @@
 version: 1
-module: ERP-OpenClaw
-high_risk_actions:
-  - delete_data
-  - financial_mutation
-  - bulk_messaging
+module: ERP-Assistant
+autonomous_actions:
+  - read_only_queries
+  - low_risk_notifications
+supervised_actions:
+  - data_mutations
+  - workflow_automation
+  - bulk_operations
+prohibited_actions:
+  - cross_tenant_data_access
+  - irreversible_delete_without_backup
+  - privilege_escalation
 controls:
-  require_human_approval: true
-  require_audit_log: true
+  require_human_in_the_loop_for_high_risk: true
+  decision_logging: true
+  rollback_window_hours: 24

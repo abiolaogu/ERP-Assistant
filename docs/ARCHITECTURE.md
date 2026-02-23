@@ -1,15 +1,35 @@
-# ERP-OpenClaw Architecture
+# ERP-Assistant Architecture
 
-OpenClaw is the universal NL interface across all ERP modules.
+## C4 Context
+- Module: `ERP-Assistant`
+- Mode: standalone_plus_suite
+- Auth: ERP-IAM (OIDC/JWT)
+- Entitlements: ERP-Platform
 
-## Components
-- `assistant-core`: intent routing and conversation loop
-- `connector-hub`: connector lifecycle and credential vault hooks
-- `action-engine`: action execution with AIDD guardrails
-- `memory-service`: semantic context and long-term memory
+## Container View
+```mermaid
+flowchart TB
+    U["Users"] --> G["Gateway / API"]
+    S1["action-engine"]
+    S2["assistant-core"]
+    S3["briefing-service"]
+    S4["connector-hub"]
+    S5["memory-service"]
+    S6["voice-service"]
+    G --> S1
+    G --> S2
+    G --> S3
+    G --> S4
+    G --> S5
+    G --> S6
+    G --> DB["PostgreSQL"]
+    G --> EV["Redpanda/Kafka"]
+```
 
-## Integrations
-- ERP-IAM for auth + permission scoping
-- ERP-Platform for entitlement-aware module discovery
-- ERP-AI for multi-step orchestration
-- ERP-iPaaS for workflow materialization
+## Service Inventory
+- `action-engine`
+- `assistant-core`
+- `briefing-service`
+- `connector-hub`
+- `memory-service`
+- `voice-service`

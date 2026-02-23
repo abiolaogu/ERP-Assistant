@@ -1,3 +1,3 @@
-# OpenClaw Web
+# Assistant Web
 
 Next.js chat interface and command palette shell.
