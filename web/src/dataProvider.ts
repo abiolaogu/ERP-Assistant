@@ -7,16 +7,13 @@ const API_URL =
 const client = new GraphQLClient(API_URL);
 
 function getHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {};
   const token = localStorage.getItem("erp_assistant_token");
   const tenantId = import.meta.env.VITE_TENANT_ID || "default";
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  headers["X-Tenant-ID"] = tenantId;
-
-  return headers;
+  return {
+    Authorization: token ? `Bearer ${token}` : "",
+    "X-Tenant-ID": tenantId,
+  };
 }
 
 function buildSortClause(
@@ -29,10 +26,14 @@ function buildSortClause(
 }
 
 function buildFilterClause(
-  filters?: Array<{ field: string; operator: string; value: unknown }>
+  filters?: unknown[]
 ): string {
   if (!filters || filters.length === 0) return "";
-  return filters
+  const simpleFilters = filters.filter(
+    (f): f is { field: string; operator: string; value: unknown } =>
+      typeof f === "object" && f !== null && "field" in f
+  );
+  return simpleFilters
     .map(
       (f) =>
         `{ field: "${f.field}", operator: "${f.operator}", value: ${JSON.stringify(f.value)} }`
