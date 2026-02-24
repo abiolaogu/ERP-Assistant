@@ -27,41 +27,39 @@ import (
 // ---------------------------------------------------------------------------
 
 const (
-	serviceName = "connector-hub"
+	serviceName = "memory-service"
 	moduleName  = "ERP-Assistant"
-	basePath    = "/v1/assistant-connectors"
+	basePath    = "/v1/memories"
 	dbName      = "erp_assistant"
-	tableName   = "assistant_connectors"
-	eventTopic  = "erp.assistant.connector"
+	tableName   = "assistant_memories"
+	eventTopic  = "erp.assistant.memory"
 	cacheTTL    = 45 * time.Second
 )
 
 var (
-	validConnectorTypes = map[string]bool{"erp_module": true, "external_api": true, "database": true, "file_system": true, "messaging": true, "calendar": true, "custom": true}
-	validHealthStatuses = map[string]bool{"healthy": true, "degraded": true, "down": true, "unknown": true}
-	validStatuses       = map[string]bool{"active": true, "inactive": true, "configuring": true, "error": true}
+	validMemoryTypes = map[string]bool{"preference": true, "context": true, "fact": true, "instruction": true, "conversation": true, "entity": true, "relationship": true}
+	validStatuses    = map[string]bool{"active": true, "archived": true, "expired": true, "superseded": true}
 )
 
 // ---------------------------------------------------------------------------
 // Entity
 // ---------------------------------------------------------------------------
 
-type assistantConnector struct {
-	ID              string  `json:"id"`
-	TenantID        string  `json:"tenant_id"`
-	Name            string  `json:"name"`
-	ServiceName     string  `json:"service_name"`
-	ConnectorType   string  `json:"connector_type"`
-	EndpointURL     *string `json:"endpoint_url,omitempty"`
-	AuthConfigRef   *string `json:"auth_config_ref,omitempty"`
-	CapabilitiesJSON *string `json:"capabilities_json,omitempty"`
-	SchemaJSON      *string `json:"schema_json,omitempty"`
-	HealthStatus    string  `json:"health_status"`
-	LastHealthCheck *string `json:"last_health_check,omitempty"`
-	RequestCount    int     `json:"request_count"`
-	Status          string  `json:"status"`
-	CreatedAt       string  `json:"created_at"`
-	UpdatedAt       string  `json:"updated_at"`
+type memory struct {
+	ID             string  `json:"id"`
+	TenantID       string  `json:"tenant_id"`
+	UserID         string  `json:"user_id"`
+	MemoryType     string  `json:"memory_type"`
+	Key            string  `json:"key"`
+	Value          string  `json:"value"`
+	Source         *string `json:"source,omitempty"`
+	Confidence     float64 `json:"confidence"`
+	AccessCount    int     `json:"access_count"`
+	LastAccessedAt *string `json:"last_accessed_at,omitempty"`
+	ExpiresAt      *string `json:"expires_at,omitempty"`
+	Status         string  `json:"status"`
+	CreatedAt      string  `json:"created_at"`
+	UpdatedAt      string  `json:"updated_at"`
 }
 
 // ---------------------------------------------------------------------------
@@ -204,53 +202,56 @@ func securityHeaders(next http.Handler) http.Handler {
 // ---------------------------------------------------------------------------
 
 type store interface {
-	List(ctx context.Context, tenantID, cursor string, limit int, filters map[string]string) ([]assistantConnector, string, error)
-	GetByID(ctx context.Context, tenantID, id string) (*assistantConnector, error)
-	Create(ctx context.Context, c *assistantConnector) error
-	Update(ctx context.Context, c *assistantConnector) error
+	List(ctx context.Context, tenantID, cursor string, limit int, filters map[string]string) ([]memory, string, error)
+	GetByID(ctx context.Context, tenantID, id string) (*memory, error)
+	Create(ctx context.Context, m *memory) error
+	Update(ctx context.Context, m *memory) error
 	Delete(ctx context.Context, tenantID, id string) error
 }
 
 // ---------------------------------------------------------------------------
-// Memory store
+// Memory store (in-memory)
 // ---------------------------------------------------------------------------
 
 type memoryStore struct {
 	mu      sync.RWMutex
-	records map[string]assistantConnector
+	records map[string]memory
 }
 
 func newMemoryStore() *memoryStore {
-	return &memoryStore{records: make(map[string]assistantConnector)}
+	return &memoryStore{records: make(map[string]memory)}
 }
 
-func (m *memoryStore) List(_ context.Context, tenantID, cursor string, limit int, filters map[string]string) ([]assistantConnector, string, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+func (ms *memoryStore) List(_ context.Context, tenantID, cursor string, limit int, filters map[string]string) ([]memory, string, error) {
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
 
-	var all []assistantConnector
-	for _, c := range m.records {
-		if c.TenantID != tenantID {
+	var all []memory
+	for _, m := range ms.records {
+		if m.TenantID != tenantID {
 			continue
 		}
-		if v, ok := filters["connector_type"]; ok && c.ConnectorType != v {
+		if v, ok := filters["user_id"]; ok && m.UserID != v {
 			continue
 		}
-		if v, ok := filters["status"]; ok && c.Status != v {
+		if v, ok := filters["memory_type"]; ok && m.MemoryType != v {
 			continue
 		}
-		if v, ok := filters["health_status"]; ok && c.HealthStatus != v {
+		if v, ok := filters["status"]; ok && m.Status != v {
 			continue
 		}
-		all = append(all, c)
+		if v, ok := filters["key"]; ok && m.Key != v {
+			continue
+		}
+		all = append(all, m)
 	}
 
 	sort.Slice(all, func(i, j int) bool { return all[i].CreatedAt < all[j].CreatedAt })
 
 	start := 0
 	if cursor != "" {
-		for i, c := range all {
-			if c.ID == cursor {
+		for i, m := range all {
+			if m.ID == cursor {
 				start = i + 1
 				break
 			}
@@ -258,7 +259,7 @@ func (m *memoryStore) List(_ context.Context, tenantID, cursor string, limit int
 	}
 
 	if start >= len(all) {
-		return []assistantConnector{}, "", nil
+		return []memory{}, "", nil
 	}
 
 	end := start + limit
@@ -275,41 +276,41 @@ func (m *memoryStore) List(_ context.Context, tenantID, cursor string, limit int
 	return result, nextCursor, nil
 }
 
-func (m *memoryStore) GetByID(_ context.Context, tenantID, id string) (*assistantConnector, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	c, ok := m.records[id]
-	if !ok || c.TenantID != tenantID {
+func (ms *memoryStore) GetByID(_ context.Context, tenantID, id string) (*memory, error) {
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
+	m, ok := ms.records[id]
+	if !ok || m.TenantID != tenantID {
 		return nil, errors.New("not found")
 	}
-	return &c, nil
+	return &m, nil
 }
 
-func (m *memoryStore) Create(_ context.Context, c *assistantConnector) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.records[c.ID] = *c
+func (ms *memoryStore) Create(_ context.Context, m *memory) error {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+	ms.records[m.ID] = *m
 	return nil
 }
 
-func (m *memoryStore) Update(_ context.Context, c *assistantConnector) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if _, ok := m.records[c.ID]; !ok {
+func (ms *memoryStore) Update(_ context.Context, m *memory) error {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+	if _, ok := ms.records[m.ID]; !ok {
 		return errors.New("not found")
 	}
-	m.records[c.ID] = *c
+	ms.records[m.ID] = *m
 	return nil
 }
 
-func (m *memoryStore) Delete(_ context.Context, tenantID, id string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	c, ok := m.records[id]
-	if !ok || c.TenantID != tenantID {
+func (ms *memoryStore) Delete(_ context.Context, tenantID, id string) error {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+	m, ok := ms.records[id]
+	if !ok || m.TenantID != tenantID {
 		return errors.New("not found")
 	}
-	delete(m.records, id)
+	delete(ms.records, id)
 	return nil
 }
 
@@ -346,34 +347,38 @@ func newPostgresStore(dsn string) (*postgresStore, error) {
 const createTableSQL = `CREATE TABLE IF NOT EXISTS ` + tableName + ` (
 	id TEXT PRIMARY KEY,
 	tenant_id TEXT NOT NULL,
-	name TEXT NOT NULL,
-	service_name TEXT NOT NULL,
-	connector_type TEXT CHECK (connector_type IN ('erp_module','external_api','database','file_system','messaging','calendar','custom')) NOT NULL,
-	endpoint_url TEXT,
-	auth_config_ref TEXT,
-	capabilities_json TEXT,
-	schema_json TEXT,
-	health_status TEXT CHECK (health_status IN ('healthy','degraded','down','unknown')) DEFAULT 'unknown',
-	last_health_check TIMESTAMPTZ,
-	request_count INT DEFAULT 0,
-	status TEXT CHECK (status IN ('active','inactive','configuring','error')) DEFAULT 'configuring',
+	user_id TEXT NOT NULL,
+	memory_type TEXT CHECK (memory_type IN ('preference','context','fact','instruction','conversation','entity','relationship')) NOT NULL,
+	key TEXT NOT NULL,
+	value TEXT NOT NULL,
+	source TEXT,
+	confidence NUMERIC(3,2) DEFAULT 1.0,
+	access_count INT DEFAULT 0,
+	last_accessed_at TIMESTAMPTZ,
+	expires_at TIMESTAMPTZ,
+	status TEXT CHECK (status IN ('active','archived','expired','superseded')) DEFAULT 'active',
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_` + tableName + `_tenant ON ` + tableName + ` (tenant_id);
-CREATE INDEX IF NOT EXISTS idx_` + tableName + `_type ON ` + tableName + ` (tenant_id, connector_type);
-CREATE INDEX IF NOT EXISTS idx_` + tableName + `_status ON ` + tableName + ` (tenant_id, status);`
+CREATE INDEX IF NOT EXISTS idx_` + tableName + `_user ON ` + tableName + ` (tenant_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_` + tableName + `_type ON ` + tableName + ` (tenant_id, memory_type);
+CREATE INDEX IF NOT EXISTS idx_` + tableName + `_key ON ` + tableName + ` (tenant_id, key);`
 
-func (p *postgresStore) List(ctx context.Context, tenantID, cursor string, limit int, filters map[string]string) ([]assistantConnector, string, error) {
-	query := `SELECT id, tenant_id, name, service_name, connector_type, endpoint_url,
-		auth_config_ref, capabilities_json, schema_json, health_status, last_health_check,
-		request_count, status, created_at, updated_at
+func (p *postgresStore) List(ctx context.Context, tenantID, cursor string, limit int, filters map[string]string) ([]memory, string, error) {
+	query := `SELECT id, tenant_id, user_id, memory_type, key, value, source,
+		confidence, access_count, last_accessed_at, expires_at, status, created_at, updated_at
 		FROM ` + tableName + ` WHERE tenant_id = $1`
 	args := []any{tenantID}
 	argIdx := 2
 
-	if v, ok := filters["connector_type"]; ok {
-		query += fmt.Sprintf(" AND connector_type = $%d", argIdx)
+	if v, ok := filters["user_id"]; ok {
+		query += fmt.Sprintf(" AND user_id = $%d", argIdx)
+		args = append(args, v)
+		argIdx++
+	}
+	if v, ok := filters["memory_type"]; ok {
+		query += fmt.Sprintf(" AND memory_type = $%d", argIdx)
 		args = append(args, v)
 		argIdx++
 	}
@@ -382,8 +387,8 @@ func (p *postgresStore) List(ctx context.Context, tenantID, cursor string, limit
 		args = append(args, v)
 		argIdx++
 	}
-	if v, ok := filters["health_status"]; ok {
-		query += fmt.Sprintf(" AND health_status = $%d", argIdx)
+	if v, ok := filters["key"]; ok {
+		query += fmt.Sprintf(" AND key = $%d", argIdx)
 		args = append(args, v)
 		argIdx++
 	}
@@ -404,40 +409,34 @@ func (p *postgresStore) List(ctx context.Context, tenantID, cursor string, limit
 	}
 	defer rows.Close()
 
-	var results []assistantConnector
+	var results []memory
 	for rows.Next() {
-		var c assistantConnector
-		var createdAt, updatedAt, lastHealthCheck sql.NullTime
-		var endpointURL, authConfigRef, capabilitiesJSON, schemaJSON sql.NullString
-		if err := rows.Scan(&c.ID, &c.TenantID, &c.Name, &c.ServiceName, &c.ConnectorType,
-			&endpointURL, &authConfigRef, &capabilitiesJSON, &schemaJSON,
-			&c.HealthStatus, &lastHealthCheck, &c.RequestCount, &c.Status,
-			&createdAt, &updatedAt); err != nil {
+		var m memory
+		var createdAt, updatedAt, lastAccessedAt, expiresAt sql.NullTime
+		var source sql.NullString
+		if err := rows.Scan(&m.ID, &m.TenantID, &m.UserID, &m.MemoryType, &m.Key, &m.Value,
+			&source, &m.Confidence, &m.AccessCount, &lastAccessedAt, &expiresAt,
+			&m.Status, &createdAt, &updatedAt); err != nil {
 			return nil, "", fmt.Errorf("scan: %w", err)
 		}
-		if endpointURL.Valid {
-			c.EndpointURL = &endpointURL.String
+		if source.Valid {
+			m.Source = &source.String
 		}
-		if authConfigRef.Valid {
-			c.AuthConfigRef = &authConfigRef.String
+		if lastAccessedAt.Valid {
+			v := lastAccessedAt.Time.Format(time.RFC3339)
+			m.LastAccessedAt = &v
 		}
-		if capabilitiesJSON.Valid {
-			c.CapabilitiesJSON = &capabilitiesJSON.String
-		}
-		if schemaJSON.Valid {
-			c.SchemaJSON = &schemaJSON.String
-		}
-		if lastHealthCheck.Valid {
-			v := lastHealthCheck.Time.Format(time.RFC3339)
-			c.LastHealthCheck = &v
+		if expiresAt.Valid {
+			v := expiresAt.Time.Format(time.RFC3339)
+			m.ExpiresAt = &v
 		}
 		if createdAt.Valid {
-			c.CreatedAt = createdAt.Time.Format(time.RFC3339)
+			m.CreatedAt = createdAt.Time.Format(time.RFC3339)
 		}
 		if updatedAt.Valid {
-			c.UpdatedAt = updatedAt.Time.Format(time.RFC3339)
+			m.UpdatedAt = updatedAt.Time.Format(time.RFC3339)
 		}
-		results = append(results, c)
+		results = append(results, m)
 	}
 
 	nextCursor := ""
@@ -449,19 +448,17 @@ func (p *postgresStore) List(ctx context.Context, tenantID, cursor string, limit
 	return results, nextCursor, nil
 }
 
-func (p *postgresStore) GetByID(ctx context.Context, tenantID, id string) (*assistantConnector, error) {
-	query := `SELECT id, tenant_id, name, service_name, connector_type, endpoint_url,
-		auth_config_ref, capabilities_json, schema_json, health_status, last_health_check,
-		request_count, status, created_at, updated_at
+func (p *postgresStore) GetByID(ctx context.Context, tenantID, id string) (*memory, error) {
+	query := `SELECT id, tenant_id, user_id, memory_type, key, value, source,
+		confidence, access_count, last_accessed_at, expires_at, status, created_at, updated_at
 		FROM ` + tableName + ` WHERE id = $1 AND tenant_id = $2`
-	var c assistantConnector
-	var createdAt, updatedAt, lastHealthCheck sql.NullTime
-	var endpointURL, authConfigRef, capabilitiesJSON, schemaJSON sql.NullString
+	var m memory
+	var createdAt, updatedAt, lastAccessedAt, expiresAt sql.NullTime
+	var source sql.NullString
 	err := p.db.QueryRowContext(ctx, query, id, tenantID).Scan(
-		&c.ID, &c.TenantID, &c.Name, &c.ServiceName, &c.ConnectorType,
-		&endpointURL, &authConfigRef, &capabilitiesJSON, &schemaJSON,
-		&c.HealthStatus, &lastHealthCheck, &c.RequestCount, &c.Status,
-		&createdAt, &updatedAt,
+		&m.ID, &m.TenantID, &m.UserID, &m.MemoryType, &m.Key, &m.Value,
+		&source, &m.Confidence, &m.AccessCount, &lastAccessedAt, &expiresAt,
+		&m.Status, &createdAt, &updatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -469,54 +466,49 @@ func (p *postgresStore) GetByID(ctx context.Context, tenantID, id string) (*assi
 		}
 		return nil, fmt.Errorf("query row: %w", err)
 	}
-	if endpointURL.Valid {
-		c.EndpointURL = &endpointURL.String
+	if source.Valid {
+		m.Source = &source.String
 	}
-	if authConfigRef.Valid {
-		c.AuthConfigRef = &authConfigRef.String
+	if lastAccessedAt.Valid {
+		v := lastAccessedAt.Time.Format(time.RFC3339)
+		m.LastAccessedAt = &v
 	}
-	if capabilitiesJSON.Valid {
-		c.CapabilitiesJSON = &capabilitiesJSON.String
-	}
-	if schemaJSON.Valid {
-		c.SchemaJSON = &schemaJSON.String
-	}
-	if lastHealthCheck.Valid {
-		v := lastHealthCheck.Time.Format(time.RFC3339)
-		c.LastHealthCheck = &v
+	if expiresAt.Valid {
+		v := expiresAt.Time.Format(time.RFC3339)
+		m.ExpiresAt = &v
 	}
 	if createdAt.Valid {
-		c.CreatedAt = createdAt.Time.Format(time.RFC3339)
+		m.CreatedAt = createdAt.Time.Format(time.RFC3339)
 	}
 	if updatedAt.Valid {
-		c.UpdatedAt = updatedAt.Time.Format(time.RFC3339)
+		m.UpdatedAt = updatedAt.Time.Format(time.RFC3339)
 	}
-	return &c, nil
+	return &m, nil
 }
 
-func (p *postgresStore) Create(ctx context.Context, c *assistantConnector) error {
-	query := `INSERT INTO ` + tableName + ` (id, tenant_id, name, service_name, connector_type,
-		endpoint_url, auth_config_ref, capabilities_json, schema_json, health_status,
-		last_health_check, request_count, status, created_at, updated_at)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`
+func (p *postgresStore) Create(ctx context.Context, m *memory) error {
+	query := `INSERT INTO ` + tableName + ` (id, tenant_id, user_id, memory_type, key, value,
+		source, confidence, access_count, last_accessed_at, expires_at, status,
+		created_at, updated_at)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`
 	_, err := p.db.ExecContext(ctx, query,
-		c.ID, c.TenantID, c.Name, c.ServiceName, c.ConnectorType,
-		c.EndpointURL, c.AuthConfigRef, c.CapabilitiesJSON, c.SchemaJSON,
-		c.HealthStatus, parseTimePtr(c.LastHealthCheck), c.RequestCount, c.Status,
-		parseTime(c.CreatedAt), parseTime(c.UpdatedAt))
+		m.ID, m.TenantID, m.UserID, m.MemoryType, m.Key, m.Value,
+		m.Source, m.Confidence, m.AccessCount,
+		parseTimePtr(m.LastAccessedAt), parseTimePtr(m.ExpiresAt), m.Status,
+		parseTime(m.CreatedAt), parseTime(m.UpdatedAt))
 	return err
 }
 
-func (p *postgresStore) Update(ctx context.Context, c *assistantConnector) error {
-	query := `UPDATE ` + tableName + ` SET name=$1, service_name=$2, connector_type=$3,
-		endpoint_url=$4, auth_config_ref=$5, capabilities_json=$6, schema_json=$7,
-		health_status=$8, last_health_check=$9, request_count=$10, status=$11, updated_at=$12
-		WHERE id=$13 AND tenant_id=$14`
+func (p *postgresStore) Update(ctx context.Context, m *memory) error {
+	query := `UPDATE ` + tableName + ` SET user_id=$1, memory_type=$2, key=$3, value=$4,
+		source=$5, confidence=$6, access_count=$7, last_accessed_at=$8, expires_at=$9,
+		status=$10, updated_at=$11
+		WHERE id=$12 AND tenant_id=$13`
 	res, err := p.db.ExecContext(ctx, query,
-		c.Name, c.ServiceName, c.ConnectorType,
-		c.EndpointURL, c.AuthConfigRef, c.CapabilitiesJSON, c.SchemaJSON,
-		c.HealthStatus, parseTimePtr(c.LastHealthCheck), c.RequestCount, c.Status,
-		parseTime(c.UpdatedAt), c.ID, c.TenantID)
+		m.UserID, m.MemoryType, m.Key, m.Value,
+		m.Source, m.Confidence, m.AccessCount,
+		parseTimePtr(m.LastAccessedAt), parseTimePtr(m.ExpiresAt),
+		m.Status, parseTime(m.UpdatedAt), m.ID, m.TenantID)
 	if err != nil {
 		return err
 	}
@@ -580,9 +572,9 @@ func (sv *server) handleList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filters := make(map[string]string)
-	for _, key := range []string{"connector_type", "status", "health_status"} {
-		if v := r.URL.Query().Get(key); v != "" {
-			filters[key] = v
+	for _, k := range []string{"user_id", "memory_type", "status", "key"} {
+		if v := r.URL.Query().Get(k); v != "" {
+			filters[k] = v
 		}
 	}
 
@@ -642,60 +634,66 @@ func (sv *server) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	name, _ := body["name"].(string)
-	if name == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "name is required"})
+	userID, _ := body["user_id"].(string)
+	if userID == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "user_id is required"})
 		return
 	}
-	svcName, _ := body["service_name"].(string)
-	if svcName == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "service_name is required"})
+	memoryType, _ := body["memory_type"].(string)
+	if !validMemoryTypes[memoryType] {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "memory_type is required and must be one of: preference, context, fact, instruction, conversation, entity, relationship"})
 		return
 	}
-	connType, _ := body["connector_type"].(string)
-	if !validConnectorTypes[connType] {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "connector_type is required and must be one of: erp_module, external_api, database, file_system, messaging, calendar, custom"})
+	key, _ := body["key"].(string)
+	if key == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "key is required"})
+		return
+	}
+	value, _ := body["value"].(string)
+	if value == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "value is required"})
 		return
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
-	conn := &assistantConnector{
-		ID:               newID(),
-		TenantID:         tenantID,
-		Name:             name,
-		ServiceName:      svcName,
-		ConnectorType:    connType,
-		EndpointURL:      strPtr(body["endpoint_url"]),
-		AuthConfigRef:    strPtr(body["auth_config_ref"]),
-		CapabilitiesJSON: strPtr(body["capabilities_json"]),
-		SchemaJSON:       strPtr(body["schema_json"]),
-		HealthStatus:     "unknown",
-		RequestCount:     0,
-		Status:           "configuring",
-		CreatedAt:        now,
-		UpdatedAt:        now,
+	m := &memory{
+		ID:          newID(),
+		TenantID:    tenantID,
+		UserID:      userID,
+		MemoryType:  memoryType,
+		Key:         key,
+		Value:       value,
+		Source:      strPtr(body["source"]),
+		Confidence:  1.0,
+		AccessCount: 0,
+		Status:      "active",
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
-	if v, ok := body["health_status"].(string); ok && validHealthStatuses[v] {
-		conn.HealthStatus = v
+	if v, ok := body["confidence"].(float64); ok && v >= 0 && v <= 1 {
+		m.Confidence = v
 	}
-	if v, ok := body["request_count"].(float64); ok {
-		conn.RequestCount = int(v)
+	if v, ok := body["access_count"].(float64); ok {
+		m.AccessCount = int(v)
 	}
 	if v, ok := body["status"].(string); ok && validStatuses[v] {
-		conn.Status = v
+		m.Status = v
 	}
-	if v, ok := body["last_health_check"].(string); ok {
-		conn.LastHealthCheck = &v
+	if v, ok := body["last_accessed_at"].(string); ok {
+		m.LastAccessedAt = &v
+	}
+	if v, ok := body["expires_at"].(string); ok {
+		m.ExpiresAt = &v
 	}
 
-	if err := sv.store.Create(r.Context(), conn); err != nil {
+	if err := sv.store.Create(r.Context(), m); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 
 	sv.cache.invalidate("list:" + tenantID)
-	writeJSON(w, http.StatusCreated, map[string]any{"item": conn, "event_topic": eventTopic + ".created"})
+	writeJSON(w, http.StatusCreated, map[string]any{"item": m, "event_topic": eventTopic + ".created"})
 }
 
 func (sv *server) handleUpdate(w http.ResponseWriter, r *http.Request, id string) {
@@ -717,35 +715,32 @@ func (sv *server) handleUpdate(w http.ResponseWriter, r *http.Request, id string
 		return
 	}
 
-	if v, ok := body["name"].(string); ok && v != "" {
-		existing.Name = v
+	if v, ok := body["user_id"].(string); ok && v != "" {
+		existing.UserID = v
 	}
-	if v, ok := body["service_name"].(string); ok && v != "" {
-		existing.ServiceName = v
+	if v, ok := body["memory_type"].(string); ok && validMemoryTypes[v] {
+		existing.MemoryType = v
 	}
-	if v, ok := body["connector_type"].(string); ok && validConnectorTypes[v] {
-		existing.ConnectorType = v
+	if v, ok := body["key"].(string); ok && v != "" {
+		existing.Key = v
 	}
-	if v, exists := body["endpoint_url"]; exists {
-		existing.EndpointURL = strPtr(v)
+	if v, ok := body["value"].(string); ok && v != "" {
+		existing.Value = v
 	}
-	if v, exists := body["auth_config_ref"]; exists {
-		existing.AuthConfigRef = strPtr(v)
+	if v, exists := body["source"]; exists {
+		existing.Source = strPtr(v)
 	}
-	if v, exists := body["capabilities_json"]; exists {
-		existing.CapabilitiesJSON = strPtr(v)
+	if v, ok := body["confidence"].(float64); ok && v >= 0 && v <= 1 {
+		existing.Confidence = v
 	}
-	if v, exists := body["schema_json"]; exists {
-		existing.SchemaJSON = strPtr(v)
+	if v, ok := body["access_count"].(float64); ok {
+		existing.AccessCount = int(v)
 	}
-	if v, ok := body["health_status"].(string); ok && validHealthStatuses[v] {
-		existing.HealthStatus = v
+	if v, ok := body["last_accessed_at"].(string); ok {
+		existing.LastAccessedAt = &v
 	}
-	if v, ok := body["last_health_check"].(string); ok {
-		existing.LastHealthCheck = &v
-	}
-	if v, ok := body["request_count"].(float64); ok {
-		existing.RequestCount = int(v)
+	if v, ok := body["expires_at"].(string); ok {
+		existing.ExpiresAt = &v
 	}
 	if v, ok := body["status"].(string); ok && validStatuses[v] {
 		existing.Status = v
@@ -791,13 +786,13 @@ func handleExplain(w http.ResponseWriter, _ *http.Request) {
 		"database":    dbName,
 		"table":       tableName,
 		"event_topic": eventTopic,
-		"entity":      "assistantConnector",
+		"entity":      "memory",
 		"fields": []string{
-			"id", "tenant_id", "name", "service_name", "connector_type", "endpoint_url",
-			"auth_config_ref", "capabilities_json", "schema_json", "health_status",
-			"last_health_check", "request_count", "status", "created_at", "updated_at",
+			"id", "tenant_id", "user_id", "memory_type", "key", "value", "source",
+			"confidence", "access_count", "last_accessed_at", "expires_at", "status",
+			"created_at", "updated_at",
 		},
-		"filters":    []string{"connector_type", "status", "health_status"},
+		"filters":    []string{"user_id", "memory_type", "status", "key"},
 		"pagination": "cursor-based",
 		"cache_ttl":  cacheTTL.String(),
 		"endpoints": map[string]string{

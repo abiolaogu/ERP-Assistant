@@ -14,7 +14,8 @@ import {
 
 import theme from "./theme";
 import { authProvider } from "./authProvider";
-import { dataProvider } from "./dataProvider";
+import { dataProvider } from "./providers/hasuraDataProvider";
+import { liveProvider } from "./providers/hasuraLiveProvider";
 
 import MainLayout from "./components/Layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
@@ -37,6 +38,7 @@ const App: React.FC = () => {
             routerProvider={routerBindings}
             authProvider={authProvider}
             dataProvider={dataProvider}
+            liveProvider={liveProvider}
             resources={[
               {
                 name: "dashboard",

@@ -1,0 +1,86 @@
+version: 3
+endpoint: ${HASURA_GRAPHQL_ENDPOINT:-http://localhost:19110}
+admin_secret: ${HASURA_GRAPHQL_ADMIN_SECRET}
+metadata_directory: metadata
+actions:
+  kind: synchronous
+  handler_webhook_baseurl: ${ACTIONS_BASE_URL:-http://localhost:8090}
+api_limits:
+  depth_limit:
+    global: 10
+    per_role:
+      viewer: 5
+      editor: 7
+      admin: 10
+      aidd_operator: 8
+  node_limit:
+    global: 50
+    per_role:
+      viewer: 20
+      editor: 30
+      admin: 50
+      aidd_operator: 40
+  rate_limit:
+    global:
+      unique_params: null
+      max_reqs_per_min: 100
+    per_role:
+      viewer:
+        unique_params: "x-hasura-user-id"
+        max_reqs_per_min: 60
+      editor:
+        unique_params: "x-hasura-user-id"
+        max_reqs_per_min: 80
+      admin:
+        unique_params: null
+        max_reqs_per_min: 200
+      aidd_operator:
+        unique_params: "x-hasura-user-id"
+        max_reqs_per_min: 120
+  batch_limit:
+    global: 10
+query_response_timeout: 30000
+enable_apollo_federation: true
+cors_config:
+  allowed_origins:
+    - "${FRONTEND_URL:-http://localhost:3000}"
+    - "${ADMIN_DASHBOARD_URL:-http://localhost:3001}"
+  allowed_methods: [GET, POST, OPTIONS]
+  allowed_headers:
+    - Content-Type
+    - Authorization
+    - X-Hasura-Admin-Secret
+    - X-Hasura-Role
+    - X-Hasura-User-Id
+    - X-Hasura-Tenant-Id
+jwt_secret:
+  type: RS256
+  jwk_url: "${JWK_URL:-http://identity-service:8080/.well-known/jwks.json}"
+  claims_namespace: "https://erp.io/jwt/claims"
+  claims_format: json
+  claims_map:
+    x-hasura-allowed-roles:
+      path: "$.roles"
+    x-hasura-default-role:
+      path: "$.default_role"
+    x-hasura-user-id:
+      path: "$.user_id"
+    x-hasura-tenant-id:
+      path: "$.tenant_id"
+unauthorized_role: anonymous
+enable_console: ${HASURA_ENABLE_CONSOLE:-true}
+dev_mode: ${HASURA_DEV_MODE:-false}
+log_level: ${HASURA_LOG_LEVEL:-info}
+enable_telemetry: false
+live_queries:
+  batch_size: 100
+  refetch_delay: 1
+streaming_queries:
+  batch_size: 100
+  refetch_delay: 1
+events:
+  http_pool_size: 100
+  fetch_interval: 1000
+schema_sync:
+  global_fetch_interval: 1000
+  instance_fetch_interval: 1000

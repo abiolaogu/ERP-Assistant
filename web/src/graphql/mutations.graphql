@@ -1,0 +1,253 @@
+### assistant_sessions ###
+
+mutation CreateAssistantSession($object: assistant_sessions_insert_input!) {
+  insert_assistant_sessions_one(object: $object) {
+    id
+    user_id
+    title
+    status
+    mode
+    model
+    messages
+    context
+    started_at
+    ended_at
+    created_at
+    updated_at
+  }
+}
+
+mutation UpdateAssistantSession($id: String!, $set: assistant_sessions_set_input!) {
+  update_assistant_sessions_by_pk(pk_columns: { id: $id }, _set: $set) {
+    id
+    user_id
+    title
+    status
+    mode
+    model
+    messages
+    context
+    started_at
+    ended_at
+    created_at
+    updated_at
+  }
+}
+
+mutation DeleteAssistantSession($id: String!) {
+  delete_assistant_sessions_by_pk(id: $id) {
+    id
+  }
+}
+
+### assistant_memories ###
+
+mutation CreateAssistantMemory($object: assistant_memories_insert_input!) {
+  insert_assistant_memories_one(object: $object) {
+    id
+    user_id
+    session_id
+    type
+    content
+    summary
+    importance
+    tags
+    expires_at
+    created_at
+    updated_at
+  }
+}
+
+mutation UpdateAssistantMemory($id: String!, $set: assistant_memories_set_input!) {
+  update_assistant_memories_by_pk(pk_columns: { id: $id }, _set: $set) {
+    id
+    user_id
+    session_id
+    type
+    content
+    summary
+    importance
+    tags
+    expires_at
+    created_at
+    updated_at
+  }
+}
+
+mutation DeleteAssistantMemory($id: String!) {
+  delete_assistant_memories_by_pk(id: $id) {
+    id
+  }
+}
+
+### assistant_briefings ###
+
+mutation CreateAssistantBriefing($object: assistant_briefings_insert_input!) {
+  insert_assistant_briefings_one(object: $object) {
+    id
+    user_id
+    title
+    summary
+    sections
+    sources
+    schedule
+    delivery_channel
+    status
+    delivered_at
+    created_at
+    updated_at
+  }
+}
+
+mutation UpdateAssistantBriefing($id: String!, $set: assistant_briefings_set_input!) {
+  update_assistant_briefings_by_pk(pk_columns: { id: $id }, _set: $set) {
+    id
+    user_id
+    title
+    summary
+    sections
+    sources
+    schedule
+    delivery_channel
+    status
+    delivered_at
+    created_at
+    updated_at
+  }
+}
+
+mutation DeleteAssistantBriefing($id: String!) {
+  delete_assistant_briefings_by_pk(id: $id) {
+    id
+  }
+}
+
+### assistant_connectors ###
+
+mutation CreateAssistantConnector($object: assistant_connectors_insert_input!) {
+  insert_assistant_connectors_one(object: $object) {
+    id
+    name
+    description
+    type
+    provider
+    status
+    config
+    auth_config
+    last_synced_at
+    created_at
+    updated_at
+  }
+}
+
+mutation UpdateAssistantConnector($id: String!, $set: assistant_connectors_set_input!) {
+  update_assistant_connectors_by_pk(pk_columns: { id: $id }, _set: $set) {
+    id
+    name
+    description
+    type
+    provider
+    status
+    config
+    auth_config
+    last_synced_at
+    created_at
+    updated_at
+  }
+}
+
+mutation DeleteAssistantConnector($id: String!) {
+  delete_assistant_connectors_by_pk(id: $id) {
+    id
+  }
+}
+
+### assistant_actions ###
+
+mutation CreateAssistantAction($object: assistant_actions_insert_input!) {
+  insert_assistant_actions_one(object: $object) {
+    id
+    session_id
+    user_id
+    type
+    name
+    description
+    status
+    input_params
+    output_result
+    error_message
+    started_at
+    completed_at
+    created_at
+    updated_at
+  }
+}
+
+mutation UpdateAssistantAction($id: String!, $set: assistant_actions_set_input!) {
+  update_assistant_actions_by_pk(pk_columns: { id: $id }, _set: $set) {
+    id
+    session_id
+    user_id
+    type
+    name
+    description
+    status
+    input_params
+    output_result
+    error_message
+    started_at
+    completed_at
+    created_at
+    updated_at
+  }
+}
+
+mutation DeleteAssistantAction($id: String!) {
+  delete_assistant_actions_by_pk(id: $id) {
+    id
+  }
+}
+
+### assistant_voice_commands ###
+
+mutation CreateAssistantVoiceCommand($object: assistant_voice_commands_insert_input!) {
+  insert_assistant_voice_commands_one(object: $object) {
+    id
+    user_id
+    session_id
+    transcript
+    intent
+    confidence
+    status
+    response_text
+    response_audio_url
+    language
+    duration_ms
+    created_at
+    updated_at
+  }
+}
+
+mutation UpdateAssistantVoiceCommand($id: String!, $set: assistant_voice_commands_set_input!) {
+  update_assistant_voice_commands_by_pk(pk_columns: { id: $id }, _set: $set) {
+    id
+    user_id
+    session_id
+    transcript
+    intent
+    confidence
+    status
+    response_text
+    response_audio_url
+    language
+    duration_ms
+    created_at
+    updated_at
+  }
+}
+
+mutation DeleteAssistantVoiceCommand($id: String!) {
+  delete_assistant_voice_commands_by_pk(id: $id) {
+    id
+  }
+}

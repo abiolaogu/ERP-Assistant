@@ -1,0 +1,36 @@
+name: default
+kind: postgres
+configuration:
+  connection_info:
+    database_url:
+      from_env: HASURA_GRAPHQL_DATABASE_URL
+    pool_settings:
+      max_connections: 50
+      idle_timeout: 180
+      retries: 1
+      connection_lifetime: 600
+    isolation_level: read-committed
+customization:
+  root_fields:
+    namespace: assistant
+  type_names:
+    prefix: assistant_
+tables: "!include default/tables/tables.yaml"
+event_triggers:
+  - name: assistant_audit_trigger
+    definition:
+      enable_manual: false
+      insert:
+        columns: "*"
+      update:
+        columns: "*"
+      delete:
+        columns: "*"
+    retry_conf:
+      num_retries: 3
+      interval_sec: 10
+      timeout_sec: 60
+    webhook: "{{ACTIONS_BASE_URL}}/api/v1/webhooks/aidd-audit"
+    headers:
+      - name: X-Webhook-Secret
+        value_from_env: WEBHOOK_SECRET

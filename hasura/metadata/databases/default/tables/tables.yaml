@@ -1,0 +1,425 @@
+- table:
+    schema: public
+    name: assistant_sessions
+  select_permissions:
+    - role: viewer
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        limit: 100
+        allow_aggregations: true
+    - role: editor
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        allow_aggregations: true
+    - role: admin
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        allow_aggregations: true
+    - role: aidd_operator
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        limit: 5000
+        allow_aggregations: true
+  insert_permissions:
+    - role: editor
+      permission:
+        columns: "*"
+        check:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        set:
+          tenant_id: x-hasura-Tenant-Id
+    - role: admin
+      permission:
+        columns: "*"
+        check:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        set:
+          tenant_id: x-hasura-Tenant-Id
+  update_permissions:
+    - role: editor
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+    - role: admin
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+  delete_permissions:
+    - role: admin
+      permission:
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+
+- table:
+    schema: public
+    name: assistant_memories
+  select_permissions:
+    - role: viewer
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        limit: 100
+        allow_aggregations: true
+    - role: editor
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        allow_aggregations: true
+    - role: admin
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        allow_aggregations: true
+    - role: aidd_operator
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        limit: 5000
+        allow_aggregations: true
+  insert_permissions:
+    - role: editor
+      permission:
+        columns: "*"
+        check:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        set:
+          tenant_id: x-hasura-Tenant-Id
+    - role: admin
+      permission:
+        columns: "*"
+        check:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        set:
+          tenant_id: x-hasura-Tenant-Id
+  update_permissions:
+    - role: editor
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+    - role: admin
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+  delete_permissions:
+    - role: admin
+      permission:
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+
+- table:
+    schema: public
+    name: assistant_briefings
+  select_permissions:
+    - role: viewer
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        limit: 100
+        allow_aggregations: true
+    - role: editor
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        allow_aggregations: true
+    - role: admin
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        allow_aggregations: true
+    - role: aidd_operator
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        limit: 5000
+        allow_aggregations: true
+  insert_permissions:
+    - role: editor
+      permission:
+        columns: "*"
+        check:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        set:
+          tenant_id: x-hasura-Tenant-Id
+    - role: admin
+      permission:
+        columns: "*"
+        check:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        set:
+          tenant_id: x-hasura-Tenant-Id
+  update_permissions:
+    - role: editor
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+    - role: admin
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+  delete_permissions:
+    - role: admin
+      permission:
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+
+- table:
+    schema: public
+    name: assistant_connectors
+  select_permissions:
+    - role: viewer
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        limit: 100
+        allow_aggregations: true
+    - role: editor
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        allow_aggregations: true
+    - role: admin
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        allow_aggregations: true
+    - role: aidd_operator
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        limit: 5000
+        allow_aggregations: true
+  insert_permissions:
+    - role: editor
+      permission:
+        columns: "*"
+        check:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        set:
+          tenant_id: x-hasura-Tenant-Id
+    - role: admin
+      permission:
+        columns: "*"
+        check:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        set:
+          tenant_id: x-hasura-Tenant-Id
+  update_permissions:
+    - role: editor
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+    - role: admin
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+  delete_permissions:
+    - role: admin
+      permission:
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+
+- table:
+    schema: public
+    name: assistant_actions
+  select_permissions:
+    - role: viewer
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        limit: 100
+        allow_aggregations: true
+    - role: editor
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        allow_aggregations: true
+    - role: admin
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        allow_aggregations: true
+    - role: aidd_operator
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        limit: 5000
+        allow_aggregations: true
+  insert_permissions:
+    - role: editor
+      permission:
+        columns: "*"
+        check:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        set:
+          tenant_id: x-hasura-Tenant-Id
+    - role: admin
+      permission:
+        columns: "*"
+        check:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        set:
+          tenant_id: x-hasura-Tenant-Id
+  update_permissions:
+    - role: editor
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+    - role: admin
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+  delete_permissions:
+    - role: admin
+      permission:
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+
+- table:
+    schema: public
+    name: assistant_voice_commands
+  select_permissions:
+    - role: viewer
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        limit: 100
+        allow_aggregations: true
+    - role: editor
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        allow_aggregations: true
+    - role: admin
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        allow_aggregations: true
+    - role: aidd_operator
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        limit: 5000
+        allow_aggregations: true
+  insert_permissions:
+    - role: editor
+      permission:
+        columns: "*"
+        check:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        set:
+          tenant_id: x-hasura-Tenant-Id
+    - role: admin
+      permission:
+        columns: "*"
+        check:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+        set:
+          tenant_id: x-hasura-Tenant-Id
+  update_permissions:
+    - role: editor
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+    - role: admin
+      permission:
+        columns: "*"
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id
+  delete_permissions:
+    - role: admin
+      permission:
+        filter:
+          tenant_id:
+            _eq: X-Hasura-Tenant-Id

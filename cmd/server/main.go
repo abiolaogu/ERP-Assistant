@@ -3,9 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"sync/atomic"
 	"time"
@@ -17,10 +18,6 @@ type capabilityDoc struct {
 	Capabilities    []string `json:"capabilities"`
 	IntegrationMode string   `json:"integration_mode,omitempty"`
 	AIDDGovernance  string   `json:"aidd_governance,omitempty"`
-}
-
-type commandRequest struct {
-	Prompt string `json:"prompt"`
 }
 
 var reqCounter uint64
@@ -46,12 +43,6 @@ func writeJSON(w http.ResponseWriter, code int, payload any) {
 	_ = json.NewEncoder(w).Encode(payload)
 }
 
-func decodeJSON(r *http.Request, dst any) error {
-	decoder := json.NewDecoder(io.LimitReader(r.Body, 1<<20))
-	decoder.DisallowUnknownFields()
-	return decoder.Decode(dst)
-}
-
 func nextRequestID(r *http.Request) string {
 	if id := r.Header.Get("X-Request-ID"); id != "" {
 		return id
@@ -68,6 +59,45 @@ type statusRecorder struct {
 func (s *statusRecorder) WriteHeader(status int) {
 	s.status = status
 	s.ResponseWriter.WriteHeader(status)
+}
+
+func env(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+func proxyRoute(mux *http.ServeMux, pathPrefix, backend string) {
+	target, err := url.Parse(backend)
+	if err != nil {
+		log.Fatalf("invalid backend URL %q for prefix %q: %v", backend, pathPrefix, err)
+	}
+	proxy := httputil.NewSingleHostReverseProxy(target)
+	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		log.Printf("proxy error prefix=%s backend=%s err=%v", pathPrefix, backend, err)
+		writeJSON(w, http.StatusBadGateway, map[string]string{
+			"error":   "backend unavailable",
+			"backend": pathPrefix,
+		})
+	}
+	mux.Handle(pathPrefix+"/", proxy)
+	mux.Handle(pathPrefix, proxy)
+	log.Printf("route %s -> %s", pathPrefix, backend)
+}
+
+func withCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Tenant-ID, X-Request-ID")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func withServerDefaults(next http.Handler) http.Handler {
@@ -119,47 +149,20 @@ func main() {
 		writeJSON(w, http.StatusOK, doc)
 	})
 
-	mux.HandleFunc("/v1/command", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
-			return
-		}
-		tenantID := r.Header.Get("X-Tenant-ID")
-		if tenantID == "" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing X-Tenant-ID"})
-			return
-		}
-		auth := r.Header.Get("Authorization")
-		if len(auth) < 20 {
-			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "missing/invalid bearer token"})
-			return
-		}
-		var req commandRequest
-		if err := decodeJSON(r, &req); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json payload"})
-			return
-		}
-		if req.Prompt == "" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "prompt is required"})
-			return
-		}
-		writeJSON(w, http.StatusAccepted, map[string]any{
-			"status":  "queued",
-			"message": "command accepted by Assistant orchestrator",
-			"prompt":  req.Prompt,
-			"tenant":  tenantID,
-		})
-	})
+	// Reverse-proxy routes to backend services
+	proxyRoute(mux, "/v1/assistant-sessions", env("ASSISTANT_CORE_URL", "http://assistant-core:8080"))
+	proxyRoute(mux, "/v1/memories", env("MEMORY_SERVICE_URL", "http://memory-service:8080"))
+	proxyRoute(mux, "/v1/briefings", env("BRIEFING_SERVICE_URL", "http://briefing-service:8080"))
+	proxyRoute(mux, "/v1/assistant-connectors", env("CONNECTOR_HUB_URL", "http://connector-hub:8080"))
+	proxyRoute(mux, "/v1/actions", env("ACTION_ENGINE_URL", "http://action-engine:8080"))
+	proxyRoute(mux, "/v1/voice-commands", env("VOICE_SERVICE_URL", "http://voice-service:8080"))
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8090"
-	}
+	port := env("PORT", "8090")
 	addr := ":" + port
 
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           withServerDefaults(mux),
+		Handler:           withCORS(withServerDefaults(mux)),
 		ReadHeaderTimeout: 2 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      30 * time.Second,
