@@ -1,0 +1,76 @@
+apiVersion: redpanda.vectorized.io/v1alpha1
+kind: TopicContractSet
+metadata:
+  name: erp-assistant-topics
+  generatedAt: "2026-02-28"
+spec:
+  broker: redpanda
+  envelope:
+    required:
+      - event_id
+      - tenant_id
+      - event_type
+      - occurred_at
+      - producer
+      - schema_version
+  topics:
+    - name: assistant.runs
+      partitions: 12
+      replicationFactor: 3
+      retentionMs: 604800000
+      cleanupPolicy: compact,delete
+      schemaRef: contracts/assistant_runs.avsc
+      compaction:
+        enabled: true
+        minCleanableDirtyRatio: 0.5
+        deleteRetentionMs: 86400000
+      tieredStorage:
+        enabled: true
+        localRetentionMs: 86400000
+        remoteRetentionMs: 2592000000
+      dlq:
+        enabled: true
+        maxRetries: 3
+        retryBackoffMs: [1000, 10000, 60000]
+        dlqTopic: "assistant.runs.dlq"
+        dlqRetentionMs: 2592000000
+    - name: assistant.approvals
+      partitions: 12
+      replicationFactor: 3
+      retentionMs: 604800000
+      cleanupPolicy: compact,delete
+      schemaRef: contracts/assistant_approvals.avsc
+      compaction:
+        enabled: true
+        minCleanableDirtyRatio: 0.5
+        deleteRetentionMs: 86400000
+      tieredStorage:
+        enabled: true
+        localRetentionMs: 86400000
+        remoteRetentionMs: 2592000000
+      dlq:
+        enabled: true
+        maxRetries: 3
+        retryBackoffMs: [1000, 10000, 60000]
+        dlqTopic: "assistant.approvals.dlq"
+        dlqRetentionMs: 2592000000
+    - name: assistant.events
+      partitions: 12
+      replicationFactor: 3
+      retentionMs: 604800000
+      cleanupPolicy: compact,delete
+      schemaRef: contracts/assistant_events.avsc
+      compaction:
+        enabled: true
+        minCleanableDirtyRatio: 0.5
+        deleteRetentionMs: 86400000
+      tieredStorage:
+        enabled: true
+        localRetentionMs: 86400000
+        remoteRetentionMs: 2592000000
+      dlq:
+        enabled: true
+        maxRetries: 3
+        retryBackoffMs: [1000, 10000, 60000]
+        dlqTopic: "assistant.events.dlq"
+        dlqRetentionMs: 2592000000
