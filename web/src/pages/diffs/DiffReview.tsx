@@ -213,7 +213,7 @@ const DiffReview: React.FC = () => {
           <Empty description="No diffs to review" />
         </Card>
       ) : (
-        <Space direction="vertical" style={{ width: "100%" }} size={16}>
+        <Space orientation="vertical" style={{ width: "100%" }} size={16}>
           {filteredDiffs.map((diff) => (
             <Card
               key={diff.id}

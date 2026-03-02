@@ -7,7 +7,7 @@ export const authProvider: AuthBindings = {
   login: async ({ email, password }) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_IAM_URL || "http://localhost:8080"}/auth/login`,
+        `${import.meta.env.VITE_IAM_URL || "http://localhost:8081"}/auth/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

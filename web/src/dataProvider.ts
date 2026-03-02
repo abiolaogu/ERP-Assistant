@@ -2,7 +2,7 @@ import type { DataProvider } from "@refinedev/core";
 import { GraphQLClient, gql } from "graphql-request";
 
 const API_URL =
-  import.meta.env.VITE_GRAPHQL_URL || "http://localhost:4000/graphql";
+  import.meta.env.VITE_GRAPHQL_URL || "http://localhost:8090/v1/graphql";
 
 const client = new GraphQLClient(API_URL);
 

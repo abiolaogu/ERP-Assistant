@@ -195,7 +195,7 @@ const ApprovalShow: React.FC = () => {
       </Card>
 
       <Card title={`Associated Diffs (${mockDiffs.length})`} style={{ borderRadius: 10, marginBottom: 24 }}>
-        <Space direction="vertical" style={{ width: "100%" }} size={16}>
+        <Space orientation="vertical" style={{ width: "100%" }} size={16}>
           {mockDiffs.map((diff) => (
             <Card
               key={diff.id}
@@ -273,7 +273,7 @@ const ApprovalShow: React.FC = () => {
 
       {mockApproval.status === "pending" && (
         <Card title="Review Decision" style={{ borderRadius: 10 }}>
-          <Space direction="vertical" style={{ width: "100%" }} size={16}>
+          <Space orientation="vertical" style={{ width: "100%" }} size={16}>
             <div>
               <Text style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>
                 Comment (optional)

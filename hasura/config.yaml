@@ -1,5 +1,5 @@
 version: 3
-endpoint: ${HASURA_GRAPHQL_ENDPOINT:-http://localhost:19110}
+endpoint: ${HASURA_GRAPHQL_ENDPOINT:-http://localhost:8090}
 admin_secret: ${HASURA_GRAPHQL_ADMIN_SECRET}
 metadata_directory: metadata
 actions:

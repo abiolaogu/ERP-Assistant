@@ -18,7 +18,8 @@ const wsClient = createClient({
 });
 
 export const liveProvider: LiveProvider = {
-  subscribe: ({ channel, resource, params, callback }) => {
+  subscribe: ({ channel, params, callback, ...rest }) => {
+    const resource = (rest as any).resource ?? channel;
     const table = ns(resource);
     const fields = params?.meta?.fields
       ? Array.isArray(params.meta.fields)
