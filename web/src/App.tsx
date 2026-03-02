@@ -10,6 +10,14 @@ import {
   DiffOutlined,
   CheckCircleOutlined,
   SettingOutlined,
+  MessageOutlined,
+  ControlOutlined,
+  BookOutlined,
+  StarOutlined,
+  FileTextOutlined,
+  ApiOutlined,
+  BarChartOutlined,
+  ToolOutlined,
 } from "@ant-design/icons";
 
 import theme from "./theme";
@@ -28,10 +36,18 @@ import DiffReview from "./pages/diffs/DiffReview";
 import ApprovalList from "./pages/approvals/ApprovalList";
 import ApprovalShow from "./pages/approvals/ApprovalShow";
 import Settings from "./pages/Settings";
+import ConversationHistory from "./pages/conversations/ConversationHistory";
+import AgentConfig from "./pages/agents/AgentConfig";
+import KnowledgeBase from "./pages/knowledge/KnowledgeBase";
+import FeedbackDashboard from "./pages/feedback/FeedbackDashboard";
+import PromptLibrary from "./pages/prompts/PromptLibrary";
+import IntegrationHub from "./pages/integrations/IntegrationHub";
+import UsageAnalytics from "./pages/analytics/UsageAnalytics";
+import ToolsManager from "./pages/tools/ToolsManager";
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ConfigProvider theme={theme}>
         <AntdApp>
           <Refine
@@ -73,6 +89,46 @@ const App: React.FC = () => {
                 meta: { icon: <CheckCircleOutlined /> },
               },
               {
+                name: "conversations",
+                list: "/conversations",
+                meta: { label: "Conversations", icon: <MessageOutlined /> },
+              },
+              {
+                name: "agent-config",
+                list: "/agent-config",
+                meta: { label: "Agent Config", icon: <ControlOutlined /> },
+              },
+              {
+                name: "knowledge-base",
+                list: "/knowledge-base",
+                meta: { label: "Knowledge Base", icon: <BookOutlined /> },
+              },
+              {
+                name: "feedback",
+                list: "/feedback",
+                meta: { label: "Feedback", icon: <StarOutlined /> },
+              },
+              {
+                name: "prompts",
+                list: "/prompts",
+                meta: { label: "Prompt Library", icon: <FileTextOutlined /> },
+              },
+              {
+                name: "integrations",
+                list: "/integrations",
+                meta: { label: "Integrations", icon: <ApiOutlined /> },
+              },
+              {
+                name: "analytics",
+                list: "/analytics",
+                meta: { label: "Usage Analytics", icon: <BarChartOutlined /> },
+              },
+              {
+                name: "tools",
+                list: "/tools",
+                meta: { label: "Skills & Tools", icon: <ToolOutlined /> },
+              },
+              {
                 name: "settings",
                 list: "/settings",
                 meta: { icon: <SettingOutlined /> },
@@ -94,6 +150,14 @@ const App: React.FC = () => {
                 <Route path="/diffs" element={<DiffReview />} />
                 <Route path="/approvals" element={<ApprovalList />} />
                 <Route path="/approvals/:id" element={<ApprovalShow />} />
+                <Route path="/conversations" element={<ConversationHistory />} />
+                <Route path="/agent-config" element={<AgentConfig />} />
+                <Route path="/knowledge-base" element={<KnowledgeBase />} />
+                <Route path="/feedback" element={<FeedbackDashboard />} />
+                <Route path="/prompts" element={<PromptLibrary />} />
+                <Route path="/integrations" element={<IntegrationHub />} />
+                <Route path="/analytics" element={<UsageAnalytics />} />
+                <Route path="/tools" element={<ToolsManager />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
             </Routes>

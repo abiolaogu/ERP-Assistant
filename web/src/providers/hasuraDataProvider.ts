@@ -1,6 +1,6 @@
 import type { DataProvider, CrudFilters, CrudSorting } from "@refinedev/core";
 import { gql } from "graphql-request";
-import { graphqlClient } from "./graphqlClient";
+import { graphqlClient, HASURA_URL } from "./graphqlClient";
 
 function mapOperator(op: string): string {
   const map: Record<string, string> = {
@@ -149,5 +149,5 @@ export const dataProvider: DataProvider = {
     return { data: result[`delete_${table}_by_pk`] };
   },
 
-  getApiUrl: () => graphqlClient.url,
+  getApiUrl: () => HASURA_URL,
 };

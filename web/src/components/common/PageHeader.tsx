@@ -36,7 +36,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         />
       )}
       <Flex justify="space-between" align="center">
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Title level={3} style={{ margin: 0, fontWeight: 700 }}>
             {title}
           </Title>

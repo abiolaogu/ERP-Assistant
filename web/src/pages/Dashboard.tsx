@@ -181,7 +181,7 @@ const Dashboard: React.FC = () => {
             style={{ borderRadius: 10 }}
             bodyStyle={{ padding: "16px 24px" }}
           >
-            <Space direction="vertical" style={{ width: "100%" }} size={16}>
+            <Space orientation="vertical" style={{ width: "100%" }} size={16}>
               {mockAgentUtilization.map((agent) => {
                 const maxAgentRuns = Math.max(...mockAgentUtilization.map((a) => a.runs));
                 return (
@@ -213,7 +213,7 @@ const Dashboard: React.FC = () => {
             style={{ borderRadius: 10 }}
             bodyStyle={{ padding: "16px 24px" }}
           >
-            <Space direction="vertical" style={{ width: "100%" }} size={14}>
+            <Space orientation="vertical" style={{ width: "100%" }} size={14}>
               {mockCostBreakdown.map((item) => (
                 <div key={item.model}>
                   <Flex justify="space-between" style={{ marginBottom: 4 }}>
@@ -285,7 +285,7 @@ const Dashboard: React.FC = () => {
             style={{ borderRadius: 10 }}
             bodyStyle={{ padding: "12px 24px" }}
           >
-            <Space direction="vertical" style={{ width: "100%" }} size={16}>
+            <Space orientation="vertical" style={{ width: "100%" }} size={16}>
               {mockActiveAgents.map((agent) => (
                 <Flex key={agent.id} justify="space-between" align="center">
                   <div>
