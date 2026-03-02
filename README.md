@@ -1,22 +1,27 @@
 # ERP-Assistant
 
-Personal AI assistant module for the ERP suite.
+Sovereign ERP 2026 module frontend.
 
-Includes connector scaffolds for internal ERP modules and external tools (Google Workspace, Microsoft 365, Notion, Slack, Jira, Trello, Asana, WhatsApp, Telegram, and storage providers).
+## Local Development
 
+- Primary URL: http://localhost:5181
+- Additional URLs: http://localhost:5173
+- Auth policy: iam-only
 
-<!-- SOVEREIGN_NEXT16_STANDARD_2026_03 -->
+```bash
+npm install --no-audit --no-fund
+npm run dev
+npm run typecheck
+npm run build
+```
 
-## Sovereign 2026 Frontend Standard
+## Architecture
 
-- Canonical frontend path: apps/sovereign-next16
-- Frontend architecture: Next.js 16 App Router + Shadcn UI + Tailwind v4
-- Service pattern: Workik-style features/*/services + TanStack Query hooks
-- Realtime contract: Centrifugo subscriptions backed by Redpanda topics
-- Shared API/data contract: Cosmo Router + Hasura + YugabyteDB
-
-### Cutover Policy
-
-- Treat legacy UI paths (web, apps/web, frontend) as transitional until parity cutover is fully signed off.
-- New feature work should target apps/sovereign-next16 by default.
-- Do not add new Refine/Ant Design dependencies in new surfaces.
+- Next.js 16 App Router + TypeScript
+- Shadcn-style primitives + Tailwind CSS v4
+- Workik feature slices under `src/features/*`
+- TanStack Query default staleTime of 5 minutes
+- Realtime invalidation via Centrifugo topic:
+  `${NEXT_PUBLIC_ENV}.${NEXT_PUBLIC_ORG}.${NEXT_PUBLIC_MODULE}.
+  ${tenant}.ui.invalidate`
+- OIDC via ERP-IAM (Authentik) with fallback policy based on module requirements
