@@ -1,8 +1,8 @@
-node_modules/
-.next/
-dist/
-build/
+.next
+node_modules
+out
 .env
-*.log
-__pycache__/
-.venv/
+.env.local
+coverage
+npm-debug.log*
+.DS_Store
