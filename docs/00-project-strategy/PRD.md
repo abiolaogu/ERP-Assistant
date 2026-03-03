@@ -1,119 +1,308 @@
-# Product Requirements Document (PRD)
+# Product Requirements Document (PRD) -- Sovereign Assistant
 
-## Product Overview
+**Module:** ERP-Assistant | **Port:** 5181 | **Version:** 3.0 | **Date:** 2026-03-03
+**Classification:** Confidential -- Internal & Investor Use
 
-The Product provides multi-tenant workflow automation and operational intelligence through a web portal, Admin portal, and API. Tenants use the Product to manage Users, roles, events, billing, and integrations with full auditability.
+---
 
-## Product Personas
+## 1. Product Vision
 
-| Persona | Description | Primary Goals |
-|---|---|---|
-| Tenant Admin | Owns Tenant setup, roles, billing, and policy | Control access, monitor usage, manage compliance |
-| Org Admin | Manages Org-level User operations | Assign roles, monitor activity, resolve issues |
-| End User | Uses business workflows in web portal | Complete tasks quickly with clear feedback |
-| Security Analyst | Reviews audit events and access posture | Detect anomalies and validate controls |
-| Finance Manager | Tracks subscription and invoices | Ensure accurate billing and spend transparency |
-| Integration Engineer | Connects Product to external Services | Reliable APIs, webhooks, and event contracts |
+Sovereign Assistant is the natural language interface to the entire Sovereign ERP ecosystem. Every employee, from the CEO to a warehouse worker, can ask questions, generate documents, trigger workflows, and automate tasks using conversational AI -- without learning a single screen, menu, or query language.
 
-## User Journeys
+**Vision Statement:** "Ask your business anything. Get answers in seconds. Automate the rest."
 
-### Journey 1: Tenant Onboarding
+## 2. User Personas
 
-1. Tenant Admin signs in and creates Tenant profile.
-2. System provisions default Org and baseline RBAC policy.
-3. Tenant Admin invites Users and assigns roles.
-4. Tenant Admin configures billing and notifications.
-5. System confirms readiness with onboarding checklist.
+### Persona 1: Executive (Sarah, CFO)
 
-### Journey 2: Secure Role Assignment
-
-1. Org Admin opens User directory.
-2. Org Admin selects User and role template.
-3. System validates constraints and segregation rules.
-4. System writes audit event and sends notification.
-
-### Journey 3: Billing Visibility
-
-1. Finance Manager opens billing dashboard.
-2. System displays subscription, usage, and invoices.
-3. Finance Manager exports month-end report.
-
-## Feature Set
-
-### MVP
-
-- Tenant and Org management
-- User management and RBAC
-- Audit log explorer
-- Billing summary and invoice list
-- Notification center
-- API keys and integration webhooks
-
-### Post-MVP
-
-- Advanced policy simulation for RBAC
-- Multi-currency billing and tax localization
-- Incident assistant and proactive anomaly recommendations
-
-## Functional Requirements
-
-1. The API must enforce Tenant and Org context on all data-access endpoints.
-2. Admins must manage Users, roles, and API keys through portal UI.
-3. Audit events must capture actor, target, action, and Environment metadata.
-4. Billing Service must support subscription upgrades/downgrades and usage metering.
-5. Notification Service must route by channel preferences and criticality.
-6. Integration Service must sign outgoing webhook payloads.
-
-## Non-Functional Requirements
-
-- Availability: 99.9% monthly per production Environment.
-- Performance: p95 API latency below 200 ms for common reads.
-- Security: encrypted in transit and at rest for sensitive data.
-- Scalability: support 10,000 concurrent Users and burst events.
-- Observability: traceable request path across all core Services.
-- Recoverability: RPO <= 15 minutes, RTO <= 60 minutes.
-
-## Acceptance Criteria (Selected)
-
-| Feature | Acceptance Criteria |
+| Attribute | Detail |
 |---|---|
-| Tenant creation | Admin can create Tenant, default Org is provisioned, audit event exists |
-| Role assignment | Only Admin roles can assign roles, conflict checks run, notification sent |
-| Billing charge | Charge event appears in billing ledger and invoice line item |
-| Audit log | Filter by Tenant, Org, actor, action, and date range |
-| Notifications | Failed deliveries are retried and visible in Admin diagnostics |
+| Role | C-Suite executive |
+| Technical Skill | Low (no SQL, limited ERP navigation) |
+| Key Needs | Real-time financial insights, board-ready reports, cross-module dashboards |
+| Pain Points | Waits 2 days for finance team to compile reports; cannot self-serve data |
+| Usage Pattern | 3-5 queries/day; mostly financial summaries and comparisons |
+| Success Metric | Can generate board-ready P&L in <30 seconds vs. 2 days |
 
-## Use Cases
+**Representative Queries:**
+- "What is our gross margin by product line for Q4?"
+- "Show me headcount changes vs. revenue growth over the last 4 quarters"
+- "Generate the monthly board report for February"
+- "Compare our inventory turnover to last year"
 
-- **UC-01**: Create Tenant and invite first Org Admin.
-- **UC-02**: Assign RBAC role to User with dual approval policy.
-- **UC-03**: Generate monthly invoice and export finance report.
-- **UC-04**: Query audit trail for privileged actions.
-- **UC-05**: Register webhook integration and validate callback signatures.
+### Persona 2: Manager (David, Operations Manager)
 
-## Workflow Overview
+| Attribute | Detail |
+|---|---|
+| Role | Department manager |
+| Technical Skill | Medium (knows ERP basics, cannot write reports) |
+| Key Needs | Team performance reports, workflow automation, meeting summaries |
+| Pain Points | Spends 3 hours/week on reports that should be automated |
+| Usage Pattern | 10-15 queries/day; mix of data lookup and task execution |
+| Success Metric | Reports auto-generated; team tasks created from meetings |
 
-```mermaid
-flowchart LR
-  A[BRD approved] --> B[PRD feature definition]
-  B --> C[Architecture and ADR]
-  C --> D[Implementation and tests]
-  D --> E[Staging validation]
-  E --> F[Production release]
-  F --> G[Operations feedback]
-  G --> B
-```
+**Representative Queries:**
+- "Which purchase orders are overdue this week?"
+- "Submit PTO for my team member John for March 15-17"
+- "Summarize yesterday's operations review meeting and create follow-up tasks"
+- "Create a purchase order for 500 units of SKU-2847 from Vendor Acme Corp"
 
-## Dependencies
+### Persona 3: Employee (Maria, Accounts Payable Clerk)
 
-- Identity provider with OAuth2/OIDC and JWT.
-- Payment processor API.
-- Email provider and webhook infrastructure.
-- Centralized observability stack.
+| Attribute | Detail |
+|---|---|
+| Role | Individual contributor |
+| Technical Skill | Low-medium (trained on specific ERP screens) |
+| Key Needs | Quick data lookup, receipt processing, expense automation |
+| Pain Points | Navigates 4 screens to process one invoice; repetitive data entry |
+| Usage Pattern | 20-30 queries/day; high-frequency task execution |
+| Success Metric | Invoice processing time reduced from 8 minutes to 90 seconds |
 
-## Release Strategy
+**Representative Queries:**
+- "Show me all unpaid invoices from Vendor X over $10,000"
+- "Process this receipt" [uploads photo]
+- "What is the approval status of PO-2847?"
+- "Create an expense report for my trip to Chicago last week"
 
-- Sprint-based delivery with feature flags.
-- Dev -> Staging -> Prod promotion through Fleet GitOps policy.
-- Canary rollout for critical API changes.
+### Persona 4: IT Administrator (Raj, IT Director)
 
+| Attribute | Detail |
+|---|---|
+| Role | IT systems administrator |
+| Technical Skill | High |
+| Key Needs | System health monitoring, user management, usage analytics |
+| Pain Points | Manages 24 modules independently; no unified admin view |
+| Usage Pattern | 5-10 queries/day; system administration and troubleshooting |
+| Success Metric | Single pane of glass for all ERP module administration |
+
+**Representative Queries:**
+- "Which users have not logged into the HR module in 90 days?"
+- "Show me API error rates across all modules for the last 24 hours"
+- "What is the storage utilization for the Finance module database?"
+- "Reset password for user jsmith@company.com across all modules"
+
+### Persona 5: Developer (Alex, Integration Engineer)
+
+| Attribute | Detail |
+|---|---|
+| Role | Software developer building on ERP APIs |
+| Technical Skill | Very high |
+| Key Needs | API documentation, code examples, debugging assistance |
+| Pain Points | 24 different API docs, inconsistent patterns, slow debugging |
+| Usage Pattern | 5-8 queries/day; technical deep-dives |
+| Success Metric | API integration time reduced from days to hours |
+
+**Representative Queries:**
+- "Show me the GraphQL schema for the Inventory module"
+- "Write a query to get all open purchase orders with line items"
+- "Why is my mutation to create a new employee failing with error 403?"
+- "Generate a TypeScript client for the Finance module API"
+
+## 3. Feature Specifications
+
+### 3.1 Natural Language Query (NLQ) Across All 24 Modules
+
+**Description:** Users type or speak questions in natural language. The assistant classifies intent, routes to the appropriate module(s), executes the query, and returns a human-readable response with data citations.
+
+**Supported Query Types:**
+
+| Type | Example | Complexity |
+|---|---|---|
+| Single-module lookup | "How many employees are in the London office?" | Simple |
+| Cross-module join | "Which departments have headcount over budget?" | Medium |
+| Aggregation | "What was total revenue by region for Q4 2025?" | Medium |
+| Comparison | "Compare inventory levels this month vs. last month" | Medium |
+| Time-series | "Show me the trend of support tickets over the last 6 months" | Complex |
+| Conditional | "List all vendors with invoices overdue by more than 30 days" | Medium |
+| Multi-step reasoning | "Which product has the highest margin after accounting for returns?" | Complex |
+
+**Technical Implementation:**
+1. User input → Intent classification (which modules are needed?)
+2. Intent → Query plan (what APIs to call, in what order?)
+3. Query plan → Module API execution (parallel where possible)
+4. API results → Response generation (natural language + citations)
+5. Response → User with follow-up suggestions
+
+**Acceptance Criteria:**
+- Single-module queries resolve in <3 seconds
+- Cross-module queries resolve in <8 seconds
+- Response accuracy >95% (validated against direct SQL queries)
+- Every data point includes source citation (module, timestamp)
+- Follow-up queries maintain conversation context for 30 minutes
+
+### 3.2 Document Generation from Templates
+
+**Description:** Generate business documents by combining templates with live ERP data. Users request documents via chat; the assistant populates templates and returns downloadable files.
+
+**Supported Document Types:**
+
+| Category | Documents | Format |
+|---|---|---|
+| Finance | Invoices, credit notes, statements, P&L, balance sheet | PDF, XLSX |
+| Procurement | Purchase orders, RFQ, vendor scorecards | PDF, DOCX |
+| HR | Offer letters, employment contracts, performance reviews | PDF, DOCX |
+| Operations | Shipping labels, packing lists, inventory reports | PDF |
+| Executive | Board reports, KPI dashboards, quarterly reviews | PDF, PPTX |
+| Custom | Any template defined by admin | All formats |
+
+**Acceptance Criteria:**
+- Document generated within 10 seconds of request
+- Data accuracy matches source module (zero transcription errors)
+- Templates support conditional logic (e.g., include section only if data exists)
+- Batch generation: 500+ documents in <5 minutes
+- Version control for templates (audit trail of changes)
+
+### 3.3 Meeting Summarization and Action Items
+
+**Description:** Process meeting recordings or transcripts, generate structured summaries, extract action items, and create tasks in relevant ERP modules.
+
+**Pipeline:**
+1. Audio/video input → Transcription (Whisper or equivalent)
+2. Transcript → Speaker diarization (who said what)
+3. Transcript → Summary generation (key decisions, discussions, outcomes)
+4. Transcript → Action item extraction (task, owner, deadline)
+5. Action items → Task creation in ERP modules (Project Management, HR, etc.)
+
+**Acceptance Criteria:**
+- Summary captures 90%+ of key decisions (validated by meeting organizer)
+- Action items correctly assigned to named individuals
+- Tasks created in appropriate ERP module within 2 minutes of processing
+- Support for meetings up to 3 hours in duration
+- Multi-language support (English, Spanish, French, German)
+
+### 3.4 AI Agents for Repetitive Tasks
+
+**Description:** Autonomous AI agents that execute multi-step tasks across ERP modules with minimal human oversight. Agents follow defined playbooks, handle exceptions, and report results.
+
+**Pre-Built Agents:**
+
+| Agent | Task | Modules Involved | Automation Level |
+|---|---|---|---|
+| Expense Agent | Process receipts → create expense report → submit for approval | Finance, HR | Fully autonomous |
+| PTO Agent | Check balance → submit request → notify manager → update calendar | HR, Calendar | Fully autonomous |
+| Onboarding Agent | Create accounts → assign equipment → schedule training → setup payroll | HR, IT, Finance | Semi-autonomous (approvals) |
+| Invoice Agent | Match PO → verify receipt → validate amounts → schedule payment | Finance, Procurement | Semi-autonomous |
+| Inventory Agent | Check levels → generate reorder alerts → create POs | Inventory, Procurement | Semi-autonomous |
+| Reporting Agent | Gather data → build report → format → distribute | All modules | Fully autonomous |
+| Compliance Agent | Check policy adherence → flag violations → generate audit report | All modules | Autonomous with escalation |
+
+**Agent Architecture:**
+1. Goal definition (user request or scheduled trigger)
+2. Plan generation (decompose goal into steps)
+3. Tool selection (which APIs/modules to call)
+4. Execution (call APIs, process results)
+5. Observation (validate results against expected outcomes)
+6. Iteration (if results unexpected, re-plan and retry)
+7. Completion (report results, update status, notify user)
+
+**Acceptance Criteria:**
+- Expense agent processes receipt-to-report in <60 seconds
+- PTO agent completes request in <30 seconds
+- Agents include human approval checkpoints for financial transactions >$1,000
+- All agent actions logged in immutable audit trail
+- Agent success rate >95% for pre-built playbooks
+
+### 3.5 Knowledge Base with RAG
+
+**Description:** Retrieval-Augmented Generation (RAG) pipeline that grounds assistant responses in company-specific knowledge: policies, procedures, documentation, historical conversations, and ERP data.
+
+**Knowledge Sources:**
+
+| Source | Ingestion Method | Update Frequency |
+|---|---|---|
+| Company policies (PDF, DOCX) | Document upload + chunking + embedding | On change |
+| ERP module documentation | Auto-extracted from module APIs | Daily |
+| Historical conversations | Auto-extracted from resolved queries | Real-time |
+| FAQ entries | Admin-curated | On edit |
+| Training materials | Document upload | On change |
+| Compliance documents | Document upload | On change |
+
+**RAG Pipeline:**
+1. User query → Embedding generation (text-embedding-3-large)
+2. Embedding → Vector search (pgvector, top-20 chunks)
+3. Chunks → Re-ranking (cross-encoder model, top-5)
+4. Top-5 chunks + query → LLM prompt construction
+5. LLM → Grounded response with citations
+6. Citations linked to source documents
+
+**Acceptance Criteria:**
+- RAG response accuracy >90% for policy/procedure queries
+- Response includes clickable citations to source documents
+- Knowledge base supports 100,000+ document chunks per tenant
+- Embedding generation: <500ms per document page
+- Vector search: <100ms for top-20 retrieval
+
+### 3.6 Contextual Module Help
+
+**Description:** In-context AI assistance within each ERP module. Users can ask "How do I...?" from any screen and receive step-by-step guidance specific to their current context.
+
+**Features:**
+- Context-aware help (knows which module and screen the user is on)
+- Step-by-step walkthroughs with highlighted UI elements
+- "Do it for me" option (assistant executes the workflow on behalf of user)
+- Help content auto-generated from module documentation and common usage patterns
+
+### 3.7 Voice Commands
+
+**Description:** Voice-to-text interface for hands-free ERP interaction. Optimized for warehouse, manufacturing, and field workers.
+
+**Pipeline:**
+1. Voice input → Speech-to-text (Whisper large-v3)
+2. Text → NLQ processing (same as text pipeline)
+3. Response → Text-to-speech (optional, for voice-first interfaces)
+
+**Acceptance Criteria:**
+- Speech recognition accuracy >95% for business terminology
+- End-to-end voice query response time <5 seconds
+- Support for noisy environments (warehouse, factory floor)
+- Support for accented English, Spanish, French, German
+
+### 3.8 Image and Receipt Processing
+
+**Description:** Upload images of receipts, invoices, business cards, or documents. OCR extracts structured data and populates ERP fields.
+
+**Supported Inputs:**
+
+| Input Type | Extracted Data | Target Module |
+|---|---|---|
+| Receipt photo | Vendor, amount, date, category, tax | Finance (Expense) |
+| Invoice scan | Vendor, line items, amounts, PO reference | Finance (AP) |
+| Business card | Name, title, company, phone, email | CRM (Contact) |
+| Whiteboard photo | Text content, diagram structure | Knowledge Base |
+| Document scan | Full text extraction | Knowledge Base |
+
+**Acceptance Criteria:**
+- OCR accuracy >97% for printed text, >90% for handwritten
+- Receipt processing: photo to expense line item in <10 seconds
+- Support for JPEG, PNG, PDF, HEIC formats
+- Multi-page document support (up to 50 pages)
+
+## 4. Non-Functional Requirements
+
+| Category | Requirement | Target |
+|---|---|---|
+| Performance | Query response time (p95) | <5 seconds |
+| Performance | Concurrent users per tenant | 500 |
+| Performance | Streaming response start | <1 second |
+| Availability | Platform uptime | 99.9% |
+| Security | Data encryption (at rest/in transit) | AES-256 / TLS 1.3 |
+| Security | LLM prompt injection prevention | Multi-layer defense |
+| Security | RBAC-enforced responses | Zero unauthorized data exposure |
+| Compliance | Conversation audit trail retention | 7 years |
+| Compliance | PII redaction in LLM prompts | 100% detection rate |
+| Scalability | Knowledge base size per tenant | 100K+ chunks |
+| Scalability | Messages per day per tenant | 50,000+ |
+
+## 5. Release Plan
+
+| Phase | Features | Timeline |
+|---|---|---|
+| Alpha | NLQ (5 core modules), basic document generation, chat UI | Q2 2026 |
+| Beta | NLQ (all 24 modules), RAG knowledge base, voice commands | Q3 2026 |
+| GA v1.0 | Full NLQ, document generation, meeting summarization, 3 AI agents | Q4 2026 |
+| v1.5 | Image processing, contextual help, 7 AI agents, enterprise search | Q1 2027 |
+| v2.0 | Custom agents, multi-language, mobile, API platform | Q2 2027 |
+
+---
+
+*Confidential. Sovereign Assistant. All rights reserved.*
