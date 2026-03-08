@@ -14,6 +14,10 @@ export const env = {
     process.env.AUTHENTIK_ISSUER_URL ??
     "http://localhost:9000/application/o/erp/",
   authentikClientId: process.env.AUTHENTIK_CLIENT_ID ?? "replace-with-client-id",
+  dbaasBaseUrl: process.env.NEXT_PUBLIC_DBAAS_BASE_URL ?? "http://localhost:8780",
+  dbaasDefaultProject: process.env.NEXT_PUBLIC_DBAAS_PROJECT ?? "assistant-core",
+  dbaasMockMode:
+    (process.env.NEXT_PUBLIC_DBAAS_MOCK_MODE ?? "true").toLowerCase() === "true",
 };
 
 export type AuthPolicy = "iam-only" | "dev-token-fallback" | "demo-token-fallback";
